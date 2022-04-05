@@ -297,6 +297,35 @@ error_payload_move(struct error_payload *dst, struct error_payload *src)
 	src->count = 0;
 }
 
+void
+error_payload_copy(struct error_payload *dst, const struct error_payload *src)
+{
+	assert(dst != src);
+	const int count = src->count;
+	if (src->fields) {
+		struct error_field **fields = xmalloc(sizeof(*fields) * count);
+		for (int i = 0; i < count; ++i) {
+			const struct error_field *to_copy = src->fields[i];
+			uint32_t name_size = strlen(to_copy->name) + 1;
+			uint32_t data_offset = offsetof(struct error_field,
+							name[name_size]);
+			uint32_t extra = mp_typeof(to_copy->data[0]) == MP_STR;
+			uint32_t total = data_offset + to_copy->size + extra;
+
+			struct error_field *new = xmalloc(total);
+			memcpy(new, to_copy, total);
+			new->data = (char *)new + data_offset;
+			fields[i] = new;
+		}
+		dst->fields = fields;
+		dst->count = count;
+	} else {
+		assert(count == 0);
+		dst->fields = NULL;
+		dst->count = 0;
+	}
+}
+
 const struct error_field *
 error_payload_find(const struct error_payload *e, const char *name)
 {

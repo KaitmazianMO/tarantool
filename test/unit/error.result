@@ -1,5 +1,5 @@
 	*** main ***
-1..10
+1..11
 	*** test_payload_field_str ***
     1..15
     ok 1 - no fields in the beginning
@@ -171,4 +171,33 @@ ok 9 - subtests
     ok 9 - FiberIsCancelled
 ok 10 - subtests
 	*** test_error_code: done ***
+	*** test_payload_copy ***
+    1..25
+    ok 1 - copied empty
+    ok 2 - got 1 field
+    ok 3 - got 1 field
+    ok 4 - key
+    ok 5 - got 4 fields
+    ok 6 - got 4 fields
+    ok 7 - key
+    ok 8 - key1
+    ok 9 - key2
+    ok 10 - key3
+    ok 11 - still 4 fields
+    ok 12 - no key4
+    ok 13 - still 4 fields
+    ok 14 - key
+    ok 15 - key1
+    ok 16 - key2
+    ok 17 - key3
+    ok 18 - got the same count
+    ok 19 - got fields
+    ok 20 - get bool
+    ok 21 - the same bool
+    ok 22 - get uint
+    ok 23 - the same uint
+    ok 24 - get double
+    ok 25 - the same double
+ok 11 - subtests
+	*** test_payload_copy: done ***
 	*** main: done ***
