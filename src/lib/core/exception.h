@@ -75,11 +75,14 @@ public:
 
 	NORETURN virtual void raise() = 0;
 	virtual void log() const;
+	/** Duplicate an exception by using its copy constructor. */
+	virtual Exception *dup() const = 0;
 	virtual ~Exception();
 
-	Exception(const Exception &) = delete;
 	Exception& operator=(const Exception&) = delete;
 protected:
+	/** Copy constructor for Exception object. */
+	Exception(const Exception &other) { error_create_copy(this, &other); }
 	Exception(const struct type_info *type, const char *file, unsigned line);
 };
 
@@ -95,6 +98,9 @@ public:
 	{
 	}
 
+	SystemError(const SystemError & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new SystemError(*this); }
 protected:
 	SystemError(const struct type_info *type, const char *file, unsigned line);
 };
@@ -109,6 +115,10 @@ public:
 		:SystemError(&type_SocketError, NULL, 0)
 	{
 	}
+
+	SocketError(const SocketError & other) : SystemError(other) {}
+
+	virtual Exception *dup() const { return new SocketError(*this); }
 
 	virtual void raise()
 	{
@@ -127,6 +137,10 @@ public:
 	{
 	}
 
+	OutOfMemory(const OutOfMemory & other) : SystemError(other) {}
+
+	virtual Exception *dup() const { return new OutOfMemory(*this); }
+
 	virtual void raise() { throw this; }
 };
 
@@ -139,6 +153,10 @@ public:
 	{
 	}
 
+	TimedOut(const TimedOut & other) : SystemError(other) {}
+
+	virtual Exception *dup() const { return new TimedOut(*this); }
+
 	virtual void raise() { throw this; }
 };
 
@@ -150,6 +168,10 @@ public:
 		:Exception(&type_ChannelIsClosed, NULL, 0)
 	{
 	}
+
+	ChannelIsClosed(const ChannelIsClosed & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new ChannelIsClosed(*this); }
 
 	virtual void raise() { throw this; }
 };
@@ -167,6 +189,10 @@ public:
 	{
 	}
 
+	FiberIsCancelled(const FiberIsCancelled & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new FiberIsCancelled(*this); }
+
 	virtual void log() const;
 	virtual void raise() { throw this; }
 };
@@ -181,6 +207,10 @@ public:
 	{
 	}
 
+	LuajitError(const LuajitError & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new LuajitError(*this); }
+
 	virtual void raise() { throw this; }
 };
 
@@ -192,6 +222,10 @@ public:
 		:Exception(&type_IllegalParams, NULL, 0)
 	{
 	}
+
+	IllegalParams(const IllegalParams & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new IllegalParams(*this); }
 
 	virtual void raise() { throw this; }
 };
@@ -206,6 +240,10 @@ public:
 	{
 	}
 
+	CollationError(const CollationError & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new CollationError(*this); }
+
 	virtual void raise() { throw this; }
 };
 
@@ -217,6 +255,10 @@ public:
 		:Exception(&type_SwimError, NULL, 0)
 	{
 	}
+
+	SwimError(const SwimError & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new SwimError(*this); }
 
 	virtual void raise() { throw this; }
 };
@@ -230,12 +272,18 @@ public:
 	{
 	}
 
+	CryptoError(const CryptoError & other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new CryptoError(*this); }
+
 	virtual void raise() { throw this; }
 };
 
 class RaftError: public Exception {
 public:
 	RaftError(const char *file, unsigned line, const char *format, ...);
+	RaftError(const RaftError & other) : Exception(other) {}
+	virtual Exception *dup() const { return new RaftError(*this); }
 	virtual void raise() { throw this; }
 };
 

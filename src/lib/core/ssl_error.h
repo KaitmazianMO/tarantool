@@ -28,6 +28,8 @@ extern const struct type_info type_SSLError;
 class SSLError: public Exception {
 public:
 	SSLError(): Exception(&type_SSLError, NULL, 0) {}
+	SSLError(const SSLError & other) : Exception(other) {}
+	virtual Exception *dup() const { return new SSLError(*this); }
 	virtual void raise() { throw this; }
 };
 

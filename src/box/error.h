@@ -218,6 +218,10 @@ public:
 	{
 	}
 
+	ClientError(const ClientError &other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new ClientError(*this); }
+
 	static uint32_t get_errcode(const struct error *e);
 protected:
 	ClientError(const type_info *type, const char *file, unsigned line,
@@ -234,6 +238,10 @@ public:
 		/* TODO: actually calls ClientError::log */
 		log();
 	}
+
+	LoggedError(const LoggedError &other) : ClientError(other) {}
+
+	virtual Exception *dup() const { return new LoggedError(*this); }
 };
 
 /**
@@ -252,6 +260,10 @@ public:
 		:ClientError(&type_AccessDeniedError, NULL, 0, 0)
 	{
 	}
+
+	AccessDeniedError(const AccessDeniedError &other) : ClientError(other) {}
+
+	virtual Exception *dup() const { return new AccessDeniedError(*this); }
 
 	const char *
 	object_type() const
@@ -298,6 +310,10 @@ struct XlogError: public Exception
 	{
 	}
 
+	XlogError(const XlogError &other) : Exception(other) {}
+
+	virtual Exception *dup() const { return new XlogError(*this); }
+
 	virtual void raise() { throw this; }
 };
 
@@ -310,6 +326,10 @@ struct XlogGapError: public XlogError
 		:XlogError(&type_XlogGapError, NULL, 0)
 	{
 	}
+
+	XlogGapError(const XlogGapError &other) : XlogError(other) {}
+
+	virtual Exception *dup() const { return new XlogGapError(*this); }
 
 	virtual void raise() { throw this; }
 };
@@ -324,6 +344,10 @@ public:
 		:ClientError(&type_CustomError, NULL, 0, 0)
 	{
 	}
+
+	CustomError(const CustomError &other) : ClientError(other) {}
+
+	virtual Exception *dup() const { return new CustomError(*this); }
 
 	virtual void log() const;
 
