@@ -54,6 +54,9 @@ struct error;
 
 typedef void (*error_f)(struct error *e);
 
+typedef struct error *
+(*error_dup_f)(const struct error *e, bool *failed);
+
 /**
  * Error diagnostics needs to be equally usable in C and C++
  * code. This is why there is a common infrastructure for errors.
@@ -72,6 +75,12 @@ struct error {
 	error_f destroy;
 	error_f raise;
 	error_f log;
+	/**
+	 * Duplicate the received error. In case of fail returns
+	 * the error that caused the fail and sets failed as true
+	 * if it is not NULL.
+	 */
+	error_dup_f dup;
 	const struct type_info *type;
 	/**
 	 * Reference counting is basically required since
@@ -258,11 +267,27 @@ error_log(struct error *e)
 	e->log(e);
 }
 
+/**
+ * Create an error by copying another. The copied error only contains
+ * previous nodes of the original error without any effect nodes.
+ * @param e original error.
+ * @return copy of the original error.
+ */
+struct error *
+error_deep_copy(const struct error *e);
+
+/**
+ * Create an error by copying another without its nodes.
+ * @param dst destination for copied error.
+ * @param src error to be copied.
+ */
+void
+error_create_copy(struct error *dst, const struct error *src);
+
 void
 error_create(struct error *e,
-	     error_f create, error_f raise, error_f log,
-	     const struct type_info *type, const char *file,
-	     unsigned line);
+	     error_f destroy, error_f raise, error_f log, error_dup_f dup,
+	     const struct type_info *type, const char *file, unsigned line);
 
 void
 error_set_location(struct error *e, const char *file, int line);

@@ -40,6 +40,14 @@ error_ref(struct error *e)
 	e->refs++;
 }
 
+/** Delete an error with its dynamic fields. */
+static void
+error_delete(struct error *e)
+{
+	error_payload_destroy(&e->payload);
+	e->destroy(e);
+}
+
 void
 error_unref(struct error *e)
 {
@@ -53,8 +61,7 @@ error_unref(struct error *e)
 			to_delete->cause->effect = NULL;
 			to_delete->cause = NULL;
 		}
-		error_payload_destroy(&to_delete->payload);
-		to_delete->destroy(to_delete);
+		error_delete(to_delete);
 		if (cause == NULL)
 			return;
 		to_delete = cause;
@@ -114,12 +121,13 @@ error_set_prev(struct error *e, struct error *prev)
 
 void
 error_create(struct error *e,
-	     error_f destroy, error_f raise, error_f log,
+	     error_f destroy, error_f raise, error_f log, error_dup_f dup,
 	     const struct type_info *type, const char *file, unsigned line)
 {
 	e->destroy = destroy;
 	e->raise = raise;
 	e->log = log;
+	e->dup = dup;
 	e->type = type;
 	e->refs = 0;
 	e->saved_errno = 0;
@@ -131,6 +139,58 @@ error_create(struct error *e,
 	e->errmsg[0] = '\0';
 	e->cause = NULL;
 	e->effect = NULL;
+}
+
+void
+error_create_copy(struct error *dst, const struct error *src)
+{
+	assert(dst != src);
+	dst->destroy = src->destroy;
+	dst->raise = src->raise;
+	dst->log = src->log;
+	dst->dup = src->dup;
+	dst->type = src->type;
+	dst->refs = 0;
+	dst->saved_errno = src->saved_errno;
+	dst->code = src->code;
+	error_payload_copy(&dst->payload, &src->payload);
+	error_set_location(dst, src->file, src->line);
+	memcpy(dst->errmsg, src->errmsg, DIAG_ERRMSG_MAX);
+	dst->cause = NULL;
+	dst->effect = NULL;
+}
+
+struct error *
+error_deep_copy(const struct error *to_copy)
+{
+	bool failed = false;
+	struct error * const head = to_copy->dup(to_copy, &failed);
+	if (failed)
+		return head;
+	head->cause = to_copy->cause;
+
+	struct error *err = head;
+	struct error *tmp;
+	while (err->cause) {
+		tmp = err->cause->dup(err->cause, &failed);
+		if (failed)
+			goto copy_failed;
+		tmp->cause = err->cause->cause;
+		error_ref(tmp);
+		tmp->effect = err;
+		err->cause = tmp;
+		err = err->cause;
+	}
+	return head;
+
+copy_failed:
+	while (err) {
+		struct error *effect = err->effect;
+		error_delete(err);
+		err = effect;
+	}
+	/** tmp keeps the error that caused the fail. */
+	return tmp;
 }
 
 void

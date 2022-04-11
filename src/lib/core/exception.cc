@@ -59,6 +59,27 @@ exception_log(struct error *error)
 	e->log();
 }
 
+/**
+ * Wrapper for calling dup from C code.
+ * In case of fail returns the error that caused the
+ * fail and sets failed as true if it is not NULL.
+ */
+static struct error *
+exception_dup(const struct error *error, bool *failed)
+{
+	try {
+		Exception *e = (Exception *) error;
+		return e->dup();
+	} catch (Exception *e) {
+		if (failed != NULL)
+			*failed = true;
+		return e;
+	} catch (...) {
+		/** Must not raise an exception from C code. */
+		panic("Unknown exception");
+	}
+}
+
 const char *
 exception_get_string(struct error *e, const struct method_info *method)
 {
@@ -115,7 +136,7 @@ Exception::Exception(const struct type_info *type_arg, const char *file,
 		     unsigned line)
 {
 	error_create(this, exception_destroy, exception_raise,
-		     exception_log, type_arg, file, line);
+		     exception_log, exception_dup, type_arg, file, line);
 }
 
 void

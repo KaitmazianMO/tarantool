@@ -34,6 +34,8 @@ public:
 	SSLError(const char *file, unsigned line)
 		: Exception(&type_SSLError, file, line) {}
 	SSLError() : SSLError(NULL, 0) {}
+	SSLError(const SSLError& other) : Exception(other) {}
+	virtual SSLError *dup() const { return new SSLError(*this); }
 	virtual void raise() { throw this; }
 };
 
